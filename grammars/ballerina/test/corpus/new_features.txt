@@ -1,0 +1,388 @@
+================================================================================
+XML namespace statement
+================================================================================
+
+xmlns "http://example.com" as ns;
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (module_part
+    (module_defn
+      (xmlns_decl_stmt
+        (string_literal
+          (double_quoted_string_literal
+            (string_body)))
+        (identifier)))))
+
+================================================================================
+Lock statement
+================================================================================
+
+function foo() {
+    lock {
+        int x = 1;
+    }
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (module_part
+    (module_defn
+      (function_defn
+        (identifier)
+        (signature)
+        (stmt_block
+          (statement
+            (lock_stmt
+              (stmt_block
+                (statement
+                  (local_var_decl_stmt
+                    (typed_binding_pattern
+                      (inferable_type_desc
+                        (type_desc
+                          (postfix_type_desc
+                            (primary_type_desc
+                              (builtin_type_name)))))
+                      (binding_pattern
+                        (identifier)))
+                    (expression
+                      (inner_expr
+                        (primary_expr
+                          (literal
+                            (int_literal
+                              (decimal_number
+                                (non_zero_digit)))))))))))))))))
+
+================================================================================
+Transaction statement
+================================================================================
+
+function bar() {
+    transaction {
+        check commit;
+    }
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (module_part
+    (module_defn
+      (function_defn
+        (identifier)
+        (signature)
+        (stmt_block
+          (statement
+            (transaction_stmt
+              (stmt_block
+                (statement
+                  (call_stmt
+                    (call_expr
+                      (checking_keyword)
+                      (call_expr
+                        (commit_expr)))))))))))))
+
+================================================================================
+Retry and Rollback statements
+================================================================================
+
+function test() {
+    retry transaction {
+        rollback;
+    }
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (module_part
+    (module_defn
+      (function_defn
+        (identifier)
+        (signature)
+        (stmt_block
+          (statement
+            (retry_stmt
+              (transaction_stmt
+                (stmt_block
+                  (statement
+                    (rollback_stmt)))))))))))
+
+================================================================================
+Fork and Worker statements
+================================================================================
+
+function asyncTest() {
+    fork {
+        worker w1 returns string {
+            return "done";
+        }
+        worker w2 {
+            string s = wait w1;
+        }
+    }
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (module_part
+    (module_defn
+      (function_defn
+        (identifier)
+        (signature)
+        (stmt_block
+          (statement
+            (fork_stmt
+              (worker_declaration
+                (identifier)
+                (type_desc
+                  (postfix_type_desc
+                    (primary_type_desc
+                      (builtin_type_name))))
+                (stmt_block
+                  (statement
+                    (return_stmt
+                      (expression
+                        (inner_expr
+                          (primary_expr
+                            (literal
+                              (string_literal
+                                (double_quoted_string_literal
+                                  (string_body)))))))))))
+              (worker_declaration
+                (identifier)
+                (stmt_block
+                  (statement
+                    (local_var_decl_stmt
+                      (typed_binding_pattern
+                        (inferable_type_desc
+                          (type_desc
+                            (postfix_type_desc
+                              (primary_type_desc
+                                (builtin_type_name)))))
+                        (binding_pattern
+                          (identifier)))
+                      (expression
+                        (wait_expr
+                          (expression
+                            (inner_expr
+                              (primary_expr
+                                (variable_reference_expr
+                                  (identifier))))))))))))))))))
+
+================================================================================
+Trap, Start, Flush, Table constructor expressions
+================================================================================
+
+function exprs() {
+    var a = trap 10 / 0;
+    future<int> f = start add(1, 2);
+    _ = flush w1;
+    table<Person> key(id) t = table key(id) [];
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (module_part
+    (module_defn
+      (function_defn
+        (identifier)
+        (signature)
+        (stmt_block
+          (statement
+            (local_var_decl_stmt
+              (typed_binding_pattern
+                (inferable_type_desc)
+                (binding_pattern
+                  (identifier)))
+              (expression
+                (inner_expr
+                  (nil_lifted_expr
+                    (multiplicative_expr
+                      (expression
+                        (trap_expr
+                          (expression
+                            (inner_expr
+                              (primary_expr
+                                (literal
+                                  (int_literal
+                                    (decimal_number
+                                      (non_zero_digit)
+                                      (digit)))))))))
+                      (expression
+                        (inner_expr
+                          (primary_expr
+                            (literal
+                              (int_literal
+                                (decimal_number))))))))))))
+          (statement
+            (local_var_decl_stmt
+              (typed_binding_pattern
+                (inferable_type_desc
+                  (type_desc
+                    (postfix_type_desc
+                      (primary_type_desc
+                        (future_type_desc
+                          (type_desc
+                            (postfix_type_desc
+                              (primary_type_desc
+                                (builtin_type_name)))))))))
+                (binding_pattern
+                  (identifier)))
+              (expression
+                (start_expr
+                  (expression
+                    (inner_expr
+                      (primary_expr
+                        (call_expr
+                          (function_call_expr
+                            (function_reference
+                              (identifier))
+                            (arg_list
+                              (positional_arg
+                                (expression
+                                  (inner_expr
+                                    (primary_expr
+                                      (literal
+                                        (int_literal
+                                          (decimal_number
+                                            (non_zero_digit))))))))
+                              (positional_arg
+                                (expression
+                                  (inner_expr
+                                    (primary_expr
+                                      (literal
+                                        (int_literal
+                                          (decimal_number
+                                            (non_zero_digit))))))))))))))))))
+          (statement
+            (destructuring_assign_stmt
+              (wildcard_binding_pattern)
+              (expression
+                (flush_expr
+                  (identifier)))))
+          (statement
+            (local_var_decl_stmt
+              (typed_binding_pattern
+                (inferable_type_desc
+                  (type_desc
+                    (postfix_type_desc
+                      (primary_type_desc
+                        (table_type_desc
+                          (type_desc
+                            (postfix_type_desc
+                              (primary_type_desc
+                                (type_reference
+                                  (identifier)))))
+                          (table_key_specifier
+                            (identifier)))))))
+                (binding_pattern
+                  (identifier)))
+              (expression
+                (table_constructor_expr
+                  (table_key_specifier
+                    (identifier)))))))))))
+
+================================================================================
+Query group by and collect
+================================================================================
+
+function query() {
+    var res = from var x in y
+              group by x.name
+              collect sum(x.price);
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (module_part
+    (module_defn
+      (function_defn
+        (identifier)
+        (signature)
+        (stmt_block
+          (statement
+            (local_var_decl_stmt
+              (typed_binding_pattern
+                (inferable_type_desc)
+                (binding_pattern
+                  (identifier)))
+              (expression
+                (query_expr
+                  (query_pipeline
+                    (from_clause
+                      (typed_binding_pattern
+                        (inferable_type_desc)
+                        (binding_pattern
+                          (identifier)))
+                      (expression
+                        (inner_expr
+                          (primary_expr
+                            (variable_reference_expr
+                              (identifier))))))
+                    (intermediate_clause
+                      (group_by_clause
+                        (expression
+                          (inner_expr
+                            (primary_expr
+                              (field_access_expr
+                                (access_target
+                                  (variable_reference_expr
+                                    (identifier)))
+                                (identifier))))))))
+                  (collect_clause
+                    (expression
+                      (inner_expr
+                        (primary_expr
+                          (call_expr
+                            (function_call_expr
+                              (function_reference
+                                (identifier))
+                              (arg_list
+                                (positional_arg
+                                  (expression
+                                    (inner_expr
+                                      (primary_expr
+                                        (field_access_expr
+                                          (access_target
+                                            (variable_reference_expr
+                                              (identifier)))
+                                          (identifier))))))))))))))))))))))
+
+================================================================================
+External functions
+================================================================================
+
+function add(int a, int b) returns int = external;
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (module_part
+    (module_defn
+      (function_defn
+        (identifier)
+        (signature
+          (param_list
+            (param
+              (type_desc
+                (postfix_type_desc
+                  (primary_type_desc
+                    (builtin_type_name))))
+              (identifier))
+            (param
+              (type_desc
+                (postfix_type_desc
+                  (primary_type_desc
+                    (builtin_type_name))))
+              (identifier)))
+          (type_desc
+            (postfix_type_desc
+              (primary_type_desc
+                (builtin_type_name)))))
+        (external_function_body)))))
