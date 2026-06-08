@@ -1,0 +1,4 @@
+name = "Ballerina"
+grammar = "ballerina"
+path_suffixes = ["bal"]
+line_comments = ["// "]

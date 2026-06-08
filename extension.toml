@@ -1,0 +1,19 @@
+id = "ballerina"
+name = "Ballerina"
+version = "0.1.1"
+schema_version = 1
+authors = ["oivanov"]
+description = "Ballerina Swan Lake language support for Zed IDE"
+repository = "https://github.com/oivanov/zed-ballerina"
+
+[grammars.ballerina]
+repository = "file:///Users/oivanov/Develop/Projects/ballerina-extensions/grammars/ballerina"
+rev = "b3cc32dcccd8ed47c381440af64f5881c2555d12"
+
+[language_servers.ballerina-language-server]
+name = "Ballerina Language Server"
+languages = ["Ballerina"]
+
+[debug_adapters.ballerina]
+name = "Ballerina Debugger"
+

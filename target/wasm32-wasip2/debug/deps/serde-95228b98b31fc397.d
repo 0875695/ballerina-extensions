@@ -1,0 +1,14 @@
+/Users/oivanov/Develop/Projects/ballerina-extensions/target/wasm32-wasip2/debug/deps/serde-95228b98b31fc397.d: /Users/oivanov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/oivanov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/oivanov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/oivanov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/oivanov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/oivanov/Develop/Projects/ballerina-extensions/target/wasm32-wasip2/debug/build/serde-407c4e74bcb7f0ed/out/private.rs
+
+/Users/oivanov/Develop/Projects/ballerina-extensions/target/wasm32-wasip2/debug/deps/libserde-95228b98b31fc397.rlib: /Users/oivanov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/oivanov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/oivanov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/oivanov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/oivanov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/oivanov/Develop/Projects/ballerina-extensions/target/wasm32-wasip2/debug/build/serde-407c4e74bcb7f0ed/out/private.rs
+
+/Users/oivanov/Develop/Projects/ballerina-extensions/target/wasm32-wasip2/debug/deps/libserde-95228b98b31fc397.rmeta: /Users/oivanov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/oivanov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/oivanov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/oivanov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/oivanov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/oivanov/Develop/Projects/ballerina-extensions/target/wasm32-wasip2/debug/build/serde-407c4e74bcb7f0ed/out/private.rs
+
+/Users/oivanov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs:
+/Users/oivanov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs:
+/Users/oivanov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs:
+/Users/oivanov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs:
+/Users/oivanov/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs:
+/Users/oivanov/Develop/Projects/ballerina-extensions/target/wasm32-wasip2/debug/build/serde-407c4e74bcb7f0ed/out/private.rs:
+
+# env-dep:OUT_DIR=/Users/oivanov/Develop/Projects/ballerina-extensions/target/wasm32-wasip2/debug/build/serde-407c4e74bcb7f0ed/out
