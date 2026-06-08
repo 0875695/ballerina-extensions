@@ -1,2 +1,0 @@
-cargo:rustc-link-lib=static=wit_bindgen_cabi_realloc0_41_0
-cargo:rustc-link-search=native=/Users/oivanov/Develop/Projects/ballerina-extensions/target/wasm32-wasip2/release/build/wit-bindgen-rt-e320fbf168cc8ea7/out
