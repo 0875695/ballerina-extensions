@@ -4,10 +4,10 @@ version = "0.1.1"
 schema_version = 1
 authors = ["oivanov"]
 description = "Ballerina Swan Lake language support for Zed IDE"
-repository = "https://gitlab.infotech.gov.ua/oleksii.ivanov/ballerina-extensions"
+repository = "git@gitlab.infotech.gov.ua:oleksii.ivanov/ballerina-extensions.git"
 
 [grammars.ballerina]
-repository = "https://gitlab.infotech.gov.ua/oleksii.ivanov/ballerina-extensions"
+repository = "git@gitlab.infotech.gov.ua:oleksii.ivanov/ballerina-extensions.git"
 rev = "master"
 path = "grammars/ballerina"
 
