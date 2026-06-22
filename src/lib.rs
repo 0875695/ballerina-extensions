@@ -76,15 +76,6 @@ impl zed::Extension for BallerinaExtension {
                 .ok_or_else(|| "The 'bal' command line tool was not found in your PATH. Please install Ballerina Swan Lake.".to_string())?
         };
 
-        // 127.0.0.1 в сетевом формате байтов (Big Endian) это 0x7F000001
-        let host = 0x7f000001;
-
-        let connection = Some(zed::TcpArguments {
-            port: 4711,
-            host,
-            timeout: Some(5000), // 5 секунд ожидания соединения
-        });
-
         // Парсим конфигурацию отладки, добавляем ballerina.home, если он не задан пользователем
         let mut launch_config: zed::serde_json::Value = zed::serde_json::from_str(&config.config)
             .unwrap_or_else(|_| zed::serde_json::json!({}));
@@ -117,11 +108,10 @@ impl zed::Extension for BallerinaExtension {
                 "-e".to_string(),
                 NODE_PROXY_SCRIPT.to_string(),
                 bal_path,
-                "4711".to_string(),
             ],
             envs: worktree.shell_env(),
             cwd: None,
-            connection,
+            connection: None,
             request_args: zed::StartDebuggingRequestArguments {
                 configuration: resolved_config,
                 request: zed::StartDebuggingRequestArgumentsRequest::Launch,
@@ -153,9 +143,8 @@ function log(...args) {
 log('Proxy starting. argv:', process.argv);
 
 const balPath = process.argv[1];
-const proxyPort = parseInt(process.argv[2], 10);
 
-if (!balPath || !proxyPort) {
+if (!balPath) {
     log('ERROR: missing arguments');
     process.exit(1);
 }
@@ -201,7 +190,10 @@ function findFreePort(callback) {
 
 findFreePort((realPort) => {
     log('Selected realPort:', realPort);
-    const child = spawn(balPath, ['start-debugger-adapter', String(realPort)], { env: process.env });
+    const child = spawn(balPath, ['start-debugger-adapter', String(realPort)], {
+        env: process.env,
+        detached: true
+    });
     
     child.stdout.on('data', (data) => {
         log('Real DAP stdout:', data.toString().trim());
@@ -217,75 +209,115 @@ findFreePort((realPort) => {
         process.exit(code || 0);
     });
 
-    const proxyServer = net.createServer((clientSocket) => {
-        log('Zed client connected');
-        let serverSocket = null;
-        let pendingClientData = [];
-        let retries = 0;
-        
-        function connectToRealDap() {
-            log('Attempting to connect to real DAP on port', realPort, '(retry', retries, ')');
-            serverSocket = net.createConnection({ port: realPort, host: '127.0.0.1' }, () => {
-                log('Connected to real DAP');
-                for (const chunk of pendingClientData) {
-                    serverSocket.write(chunk);
-                }
-                pendingClientData = [];
-            });
-            
-            serverSocket.on('error', (err) => {
-                log('Real DAP socket error:', err.message);
-                if (retries < 50) {
-                    retries++;
-                    setTimeout(connectToRealDap, 100);
-                } else {
-                    log('Connection to real DAP failed after 50 retries');
-                    clientSocket.destroy();
-                }
-            });
-            
-            const parser = new JsonRpcParser((body) => {
-                log('Intercepted response body:', body);
-                const modifiedBody = body.replace(/"file:\/\/([^"]*)"/g, (match, path) => {
-                    if (path.startsWith('/') && path.match(/^\/[a-zA-Z]:/)) {
-                        return `"${path.substring(1)}"`;
-                    }
-                    return `"${path}"`;
-                });
-                log('Modified response body:', modifiedBody);
-                const response = `Content-Length: ${Buffer.byteLength(modifiedBody, 'utf8')}\r\n\r\n${modifiedBody}`;
-                clientSocket.write(response);
-            });
-            
-            serverSocket.on('data', (chunk) => parser.append(chunk));
-            serverSocket.on('end', () => {
-                log('Real DAP socket ended');
-                clientSocket.end();
-            });
+    const killChild = () => {
+        log('Killing child process group...');
+        try {
+            process.kill(-child.pid, 'SIGTERM');
+        } catch (e) {
+            try {
+                child.kill('SIGTERM');
+            } catch (err) {}
         }
-        
-        connectToRealDap();
-        
-        clientSocket.on('data', (chunk) => {
-            log('Received data from Zed:', chunk.toString('utf8'));
-            if (serverSocket && serverSocket.writable) {
+    };
+
+    process.on('exit', () => {
+        killChild();
+    });
+    process.on('SIGTERM', () => {
+        log('Received SIGTERM, exiting');
+        killChild();
+        process.exit(0);
+    });
+    process.on('SIGINT', () => {
+        log('Received SIGINT, exiting');
+        killChild();
+        process.exit(0);
+    });
+    process.on('SIGHUP', () => {
+        log('Received SIGHUP, exiting');
+        killChild();
+        process.exit(0);
+    });
+
+    let serverSocket = null;
+    let pendingClientData = [];
+    let connected = false;
+    let retries = 0;
+    
+    function connectToRealDap() {
+        log('Attempting to connect to real DAP on port', realPort, '(retry', retries, ')');
+        serverSocket = net.createConnection({ port: realPort, host: '127.0.0.1' }, () => {
+            log('Connected to real DAP');
+            connected = true;
+            for (const chunk of pendingClientData) {
                 serverSocket.write(chunk);
+            }
+            pendingClientData = [];
+        });
+        
+        serverSocket.on('error', (err) => {
+            log('Real DAP socket error:', err.message);
+            if (retries < 50) {
+                retries++;
+                setTimeout(connectToRealDap, 100);
             } else {
-                pendingClientData.push(chunk);
+                log('Connection to real DAP failed after 50 retries');
+                process.exit(1);
             }
         });
         
-        clientSocket.on('error', (err) => {
-            log('Zed client socket error:', err.message);
+        const parser = new JsonRpcParser((body) => {
+            log('Intercepted response body:', body);
+            const modifiedBody = body.replace(/"file:\/\/([^"]*)"/g, (match, path) => {
+                if (path.startsWith('/') && path.match(/^\/[a-zA-Z]:/)) {
+                    return `"${path.substring(1)}"`;
+                }
+                return `"${path}"`;
+            });
+            log('Modified response body:', modifiedBody);
+            const response = `Content-Length: ${Buffer.byteLength(modifiedBody, 'utf8')}\r\n\r\n${modifiedBody}`;
+            process.stdout.write(response);
+            
+            try {
+                const msg = JSON.parse(body);
+                if (msg.type === 'response' && (msg.command === 'terminate' || msg.command === 'disconnect') && msg.success) {
+                    log(`Detected successful ${msg.command} response. Scheduling exit...`);
+                    setTimeout(() => {
+                        log('Exiting after terminate/disconnect response');
+                        killChild();
+                        process.exit(0);
+                    }, 200);
+                }
+            } catch (err) {
+                log('Error parsing response JSON:', err.message);
+            }
         });
-        clientSocket.on('end', () => {
-            log('Zed client socket ended');
-            if (serverSocket) serverSocket.end();
+        
+        serverSocket.on('data', (chunk) => parser.append(chunk));
+        serverSocket.on('end', () => {
+            log('Real DAP socket ended');
+            process.exit(0);
         });
+    }
+    
+    connectToRealDap();
+    
+    process.stdin.on('data', (chunk) => {
+        log('Received data from Zed:', chunk.toString('utf8'));
+        if (connected && serverSocket && serverSocket.writable) {
+            serverSocket.write(chunk);
+        } else {
+            pendingClientData.push(chunk);
+        }
     });
     
-    proxyServer.listen(proxyPort, '127.0.0.1', () => {
-        log('Proxy server listening on port:', proxyPort);
+    process.stdin.on('error', (err) => {
+        log('Zed stdin error:', err.message);
+    });
+    process.stdin.on('end', () => {
+        log('Zed stdin ended, exiting...');
+        killChild();
+        process.exit(0);
     });
 });
 "#;
