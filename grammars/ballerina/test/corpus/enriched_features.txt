@@ -1,0 +1,546 @@
+================================================================================
+Tuple Destructuring
+================================================================================
+function foo() {
+    [int, string] [a, b] = x;
+}
+--------------------------------------------------------------------------------
+
+(source_file
+  (module_part
+    (module_defn
+      (function_defn
+        (identifier)
+        (signature)
+        (stmt_block
+          (statement
+            (local_var_decl_stmt
+              (typed_binding_pattern
+                (inferable_type_desc
+                  (type_desc
+                    (postfix_type_desc
+                      (primary_type_desc
+                        (tuple_type_desc
+                          (tuple_member_type_desc_list
+                            (type_desc
+                              (postfix_type_desc
+                                (primary_type_desc
+                                  (builtin_type_name))))
+                            (type_desc
+                              (postfix_type_desc
+                                (primary_type_desc
+                                  (builtin_type_name))))))))))
+                (binding_pattern
+                  (list_binding_pattern
+                    (list_binding_pattern_members
+                      (binding_pattern
+                        (identifier))
+                      (binding_pattern
+                        (identifier))))))
+              (expression
+                (inner_expr
+                  (primary_expr
+                    (variable_reference_expr
+                      (identifier))))))))))))
+
+================================================================================
+Record Destructuring
+================================================================================
+function foo() {
+    var {x: y, ...z} = foo;
+}
+--------------------------------------------------------------------------------
+
+(source_file
+  (module_part
+    (module_defn
+      (function_defn
+        (identifier)
+        (signature)
+        (stmt_block
+          (statement
+            (local_var_decl_stmt
+              (typed_binding_pattern
+                (inferable_type_desc)
+                (binding_pattern
+                  (mapping_binding_pattern
+                    (mapping_binding_pattern_members
+                      (field_binding_pattern
+                        (field_name
+                          (identifier))
+                        (binding_pattern
+                          (identifier)))
+                      (rest_binding_pattern
+                        (identifier))))))
+              (expression
+                (inner_expr
+                  (primary_expr
+                    (variable_reference_expr
+                      (identifier))))))))))))
+
+================================================================================
+Error Destructuring
+================================================================================
+function foo() {
+    var error(message, cause, code = code, ...rest) = err;
+}
+--------------------------------------------------------------------------------
+
+(source_file
+  (module_part
+    (module_defn
+      (function_defn
+        (identifier)
+        (signature)
+        (stmt_block
+          (statement
+            (local_var_decl_stmt
+              (typed_binding_pattern
+                (inferable_type_desc)
+                (binding_pattern
+                  (error_binding_pattern
+                    (error_binding_pattern_members
+                      (binding_pattern
+                        (identifier))
+                      (binding_pattern
+                        (identifier))
+                      (error_detail_binding_pattern
+                        (identifier)
+                        (binding_pattern
+                          (identifier)))
+                      (rest_binding_pattern
+                        (identifier))))))
+              (expression
+                (inner_expr
+                  (primary_expr
+                    (variable_reference_expr
+                      (identifier))))))))))))
+
+================================================================================
+Arrow Functions
+================================================================================
+function foo() {
+    var f1 = x => x * x;
+    var f2 = (x, y) => x + y;
+}
+--------------------------------------------------------------------------------
+
+(source_file
+  (module_part
+    (module_defn
+      (function_defn
+        (identifier)
+        (signature)
+        (stmt_block
+          (statement
+            (local_var_decl_stmt
+              (typed_binding_pattern
+                (inferable_type_desc)
+                (binding_pattern
+                  (identifier)))
+              (expression
+                (arrow_function_expr
+                  (arrow_param_list
+                    (identifier))
+                  (expression
+                    (inner_expr
+                      (nil_lifted_expr
+                        (multiplicative_expr
+                          (expression
+                            (inner_expr
+                              (primary_expr
+                                (variable_reference_expr
+                                  (identifier)))))
+                          (expression
+                            (inner_expr
+                              (primary_expr
+                                (variable_reference_expr
+                                  (identifier)))))))))))))
+          (statement
+            (local_var_decl_stmt
+              (typed_binding_pattern
+                (inferable_type_desc)
+                (binding_pattern
+                  (identifier)))
+              (expression
+                (arrow_function_expr
+                  (arrow_param_list
+                    (param_list
+                      (param
+                        (type_desc
+                          (postfix_type_desc
+                            (primary_type_desc
+                              (type_reference
+                                (identifier))))))
+                      (param
+                        (type_desc
+                          (postfix_type_desc
+                            (primary_type_desc
+                              (type_reference
+                                (identifier))))))))
+                  (expression
+                    (inner_expr
+                      (nil_lifted_expr
+                        (additive_expr
+                          (expression
+                            (inner_expr
+                              (primary_expr
+                                (variable_reference_expr
+                                  (identifier)))))
+                          (expression
+                            (inner_expr
+                              (primary_expr
+                                (variable_reference_expr
+                                  (identifier))))))))))))))))))
+
+================================================================================
+Worker Send Receive
+================================================================================
+function foo() {
+    data -> workerName;
+    data ->> w1;
+    var x = <- w1;
+    var y = <- {a: w1, b: w2};
+}
+--------------------------------------------------------------------------------
+
+(source_file
+  (module_part
+    (module_defn
+      (function_defn
+        (identifier)
+        (signature)
+        (stmt_block
+          (statement
+            (worker_send_stmt
+              (expression
+                (inner_expr
+                  (primary_expr
+                    (variable_reference_expr
+                      (identifier)))))
+              (identifier)))
+          (statement
+            (worker_send_stmt
+              (expression
+                (inner_expr
+                  (primary_expr
+                    (variable_reference_expr
+                      (identifier)))))
+              (identifier)))
+          (statement
+            (local_var_decl_stmt
+              (typed_binding_pattern
+                (inferable_type_desc)
+                (binding_pattern
+                  (identifier)))
+              (expression
+                (worker_receive_expression
+                  (identifier)))))
+          (statement
+            (local_var_decl_stmt
+              (typed_binding_pattern
+                (inferable_type_desc)
+                (binding_pattern
+                  (identifier)))
+              (expression
+                (worker_receive_expression
+                  (multiple_worker_receive
+                    (receive_fields
+                      (receive_field
+                        (identifier)
+                        (identifier))
+                      (receive_field
+                        (identifier)
+                        (identifier)))))))))))))
+
+================================================================================
+Parameterized Error Types
+================================================================================
+type HttpError error<HttpDetail>;
+type MyError error;
+--------------------------------------------------------------------------------
+
+(source_file
+  (module_part
+    (module_defn
+      (type_defn
+        (identifier)
+        (type_desc
+          (postfix_type_desc
+            (primary_type_desc
+              (error_type_desc
+                (type_desc
+                  (postfix_type_desc
+                    (primary_type_desc
+                      (type_reference
+                        (identifier)))))))))))
+    (module_defn
+      (type_defn
+        (identifier)
+        (type_desc
+          (postfix_type_desc
+            (primary_type_desc
+              (builtin_type_name))))))))
+
+================================================================================
+Error Constructor With Type
+================================================================================
+function foo() {
+    var err = error MyError("whoops", code = 404);
+}
+--------------------------------------------------------------------------------
+
+(source_file
+  (module_part
+    (module_defn
+      (function_defn
+        (identifier)
+        (signature)
+        (stmt_block
+          (statement
+            (local_var_decl_stmt
+              (typed_binding_pattern
+                (inferable_type_desc)
+                (binding_pattern
+                  (identifier)))
+              (expression
+                (inner_expr
+                  (primary_expr
+                    (error_constructor_expr
+                      (type_reference
+                        (identifier))
+                      (arg_list
+                        (positional_arg
+                          (expression
+                            (inner_expr
+                              (primary_expr
+                                (literal
+                                  (string_literal
+                                    (double_quoted_string_literal
+                                      (string_body))))))))
+                        (named_arg
+                          (identifier)
+                          (expression
+                            (inner_expr
+                              (primary_expr
+                                (literal
+                                  (int_literal
+                                    (decimal_number
+                                      (non_zero_digit)
+                                      (digit)
+                                      (digit))))))))))))))))))))
+
+================================================================================
+Regex Literals
+================================================================================
+function foo() {
+    var pattern = re `[a-z]+`;
+}
+--------------------------------------------------------------------------------
+
+(source_file
+  (module_part
+    (module_defn
+      (function_defn
+        (identifier)
+        (signature)
+        (stmt_block
+          (statement
+            (local_var_decl_stmt
+              (typed_binding_pattern
+                (inferable_type_desc)
+                (binding_pattern
+                  (identifier)))
+              (expression
+                (inner_expr
+                  (primary_expr
+                    (template_expression
+                      (regexp_template_expression
+                        (back_tick_string
+                          (back_tick_body
+                            (back_tick_content)))))))))))))))
+
+================================================================================
+Object Constructor
+================================================================================
+function foo() {
+    var obj = client object {
+        int x = 0;
+    };
+}
+--------------------------------------------------------------------------------
+
+(source_file
+  (module_part
+    (module_defn
+      (function_defn
+        (identifier)
+        (signature)
+        (stmt_block
+          (statement
+            (local_var_decl_stmt
+              (typed_binding_pattern
+                (inferable_type_desc)
+                (binding_pattern
+                  (identifier)))
+              (expression
+                (object_constructor_expr
+                  (class_member
+                    (object_field
+                      (type_desc
+                        (postfix_type_desc
+                          (primary_type_desc
+                            (builtin_type_name))))
+                      (identifier)
+                      (expression
+                        (inner_expr
+                          (primary_expr
+                            (literal
+                              (int_literal
+                                (decimal_number)))))))))))))))))
+
+================================================================================
+Let Expression
+================================================================================
+function foo() {
+    var res = let int x = 1 in x + 1;
+}
+--------------------------------------------------------------------------------
+
+(source_file
+  (module_part
+    (module_defn
+      (function_defn
+        (identifier)
+        (signature)
+        (stmt_block
+          (statement
+            (local_var_decl_stmt
+              (typed_binding_pattern
+                (inferable_type_desc)
+                (binding_pattern
+                  (identifier)))
+              (expression
+                (inner_expr
+                  (nil_lifted_expr
+                    (additive_expr
+                      (expression
+                        (let_expr
+                          (let_var_decl
+                            (typed_binding_pattern
+                              (inferable_type_desc
+                                (type_desc
+                                  (postfix_type_desc
+                                    (primary_type_desc
+                                      (builtin_type_name)))))
+                              (binding_pattern
+                                (identifier)))
+                            (expression
+                              (inner_expr
+                                (primary_expr
+                                  (literal
+                                    (int_literal
+                                      (decimal_number
+                                        (non_zero_digit))))))))
+                          (expression
+                            (inner_expr
+                              (primary_expr
+                                (variable_reference_expr
+                                  (identifier)))))))
+                      (expression
+                        (inner_expr
+                          (primary_expr
+                            (literal
+                              (int_literal
+                                (decimal_number
+                                  (non_zero_digit))))))))))))))))))
+
+================================================================================
+Unary operators
+================================================================================
+function foo() {
+    var res1 = !x;
+    var res2 = +x;
+}
+--------------------------------------------------------------------------------
+
+(source_file
+  (module_part
+    (module_defn
+      (function_defn
+        (identifier)
+        (signature)
+        (stmt_block
+          (statement
+            (local_var_decl_stmt
+              (typed_binding_pattern
+                (inferable_type_desc)
+                (binding_pattern
+                  (identifier)))
+              (expression
+                (inner_expr
+                  (logical_not_expr
+                    (expression
+                      (inner_expr
+                        (primary_expr
+                          (variable_reference_expr
+                            (identifier))))))))))
+          (statement
+            (local_var_decl_stmt
+              (typed_binding_pattern
+                (inferable_type_desc)
+                (binding_pattern
+                  (identifier)))
+              (expression
+                (inner_expr
+                  (nil_lifted_expr
+                    (unary_numeric_expression
+                      (expression
+                        (inner_expr
+                          (primary_expr
+                            (variable_reference_expr
+                              (identifier))))))))))))))))
+
+================================================================================
+Table Query Construct
+================================================================================
+function foo() {
+    var res = table key(id) from var x in y select x;
+}
+--------------------------------------------------------------------------------
+
+(source_file
+  (module_part
+    (module_defn
+      (function_defn
+        (identifier)
+        (signature)
+        (stmt_block
+          (statement
+            (local_var_decl_stmt
+              (typed_binding_pattern
+                (inferable_type_desc)
+                (binding_pattern
+                  (identifier)))
+              (expression
+                (query_expr
+                  (query_construct_type
+                    (table_key_specifier
+                      (identifier)))
+                  (query_pipeline
+                    (from_clause
+                      (typed_binding_pattern
+                        (inferable_type_desc)
+                        (binding_pattern
+                          (identifier)))
+                      (expression
+                        (inner_expr
+                          (primary_expr
+                            (variable_reference_expr
+                              (identifier)))))))
+                  (select_clause
+                    (expression
+                      (inner_expr
+                        (primary_expr
+                          (variable_reference_expr
+                            (identifier)))))))))))))))
