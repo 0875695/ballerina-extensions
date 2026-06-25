@@ -7,8 +7,9 @@ description = "Ballerina Swan Lake language support for Zed IDE"
 repository = "git@gitlab.infotech.gov.ua:oleksii.ivanov/ballerina-extensions.git"
 
 [grammars.ballerina]
-repository = "file:///Users/oivanov/Develop/Projects/ballerina-extensions/grammars/ballerina"
+repository = "https://github.com/0875695/ballerina-extensions.git"
 rev = "master"
+path = "grammars/ballerina"
 
 [language_servers.ballerina-language-server]
 name = "Ballerina Language Server"
