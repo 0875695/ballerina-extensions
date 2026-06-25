@@ -1,0 +1,72 @@
+================
+Service definition
+================
+
+isolated service http:Service / on diiaService {
+    isolated resource function get diia/'client/[int inn]/driver() returns DiiaDriverLicense {
+        int a = 1;
+    }
+}
+
+---
+(source_file
+  (module_part
+    (module_defn
+      (service_defn
+        (type_desc
+          (postfix_type_desc
+            (primary_type_desc
+              (type_reference
+                (qualified_identifier
+                  (module_prefix
+                    (identifier))
+                  (identifier))))))
+        (absolute_resource_path)
+        (expression
+          (inner_expr
+            (primary_expr
+              (variable_reference_expr
+                (identifier)))))
+        (service_member
+          (resource_function_defn
+            (function_quals
+              (isolated_qual))
+            (identifier)
+            (resource_path
+              (resource_path_segment
+                (identifier))
+              (resource_path_segment
+                (identifier))
+              (resource_path_segment
+                (path_parameter
+                  (type_desc
+                    (postfix_type_desc
+                      (primary_type_desc
+                        (builtin_type_name))))
+                  (identifier)))
+              (resource_path_segment
+                (identifier)))
+            (signature
+              (type_desc
+                (postfix_type_desc
+                  (primary_type_desc
+                    (type_reference
+                      (identifier))))))
+            (stmt_block
+              (statement
+                (local_var_decl_stmt
+                  (typed_binding_pattern
+                    (inferable_type_desc
+                      (type_desc
+                        (postfix_type_desc
+                          (primary_type_desc
+                            (builtin_type_name)))))
+                    (binding_pattern
+                      (identifier)))
+                  (expression
+                    (inner_expr
+                      (primary_expr
+                        (literal
+                          (int_literal
+                            (decimal_number
+                              (non_zero_digit))))))))))))))))
