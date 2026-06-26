@@ -1,3 +1,71 @@
-# tree-sitter-ballerina
+# Ballerina Extension & Tree-sitter Parser for Zed IDE
 
-Ballerina grammer for [tree-sitter](https://github.com/tree-sitter/tree-sitter). Currently fully implements the grammer in [nballerina](https://github.com/ballerina-platform/nballerina) subset 14 as well as parts of ballerina spec version [2022R2](https://ballerina.io/spec/lang/2022R2/)
+Данный репозиторий представляет собой расширение для редактора **Zed IDE**, добавляющее поддержку языка программирования **Ballerina (Swan Lake)**. Оно объединяет в себе парсер Tree-sitter для подсветки синтаксиса, интеграцию с языковым сервером (LSP) и прокси-скрипт для отладчика (DAP).
+
+## Структура проекта
+
+Проект имеет следующую структуру директорий и файлов:
+
+- `grammar.js` — описание грамматики Tree-sitter для языка Ballerina.
+- `src/lib.rs` — Rust-код расширения, использующий `zed_extension_api` для запуска Ballerina Language Server и DAP-прокси.
+- `extension.toml` — метаданные расширения Zed (идентификатор, версия, поддерживаемые языковые серверы и отладчики).
+- `queries/highlights.scm` — правила сопоставления синтаксиса Tree-sitter для подсветки кода в редакторе.
+- `test/corpus/` — тестовые сценарии (корпус тестов) для проверки парсера Tree-sitter.
+- `package.json` — конфигурация NPM для сборки и тестирования парсера Tree-sitter.
+- `Cargo.toml` — конфигурация Rust-пакета расширения.
+
+## Установка и сборка
+
+### Разработка парсера Tree-sitter
+
+Для изменения грамматики и запуска тестов парсера требуются [Node.js](https://nodejs.org/) и `tree-sitter-cli`:
+
+1. Установите зависимости проекта:
+   ```bash
+   npm install
+   ```
+2. Сгенерируйте парсер из `grammar.js`:
+   ```bash
+   npx tree-sitter generate
+   ```
+3. Запустите тесты грамматики:
+   ```bash
+   npm run test
+   ```
+   или напрямую через CLI:
+   ```bash
+   tree-sitter test
+   ```
+
+### Сборка расширения Zed
+
+Расширение компилируется в WebAssembly модуль для работы внутри Zed. Для этого требуется установленный Rust:
+
+1. Проверьте корректность сборки кода расширения:
+   ```bash
+   cargo check
+   ```
+2. Соберите релизную версию:
+   ```bash
+   cargo build --release
+   ```
+
+## Поддержка спецификации Ballerina 2024R1
+
+Проект обновлен для поддержки спецификации языка **Ballerina 2024R1** (Swan Lake Update 9+). В грамматику и парсер добавлены следующие возможности:
+
+### 1. Alternate Receive Action
+Поддержка синтаксиса параллельного ожидания от воркеров:
+```ballerina
+string|error result = <- w1 | w2;
+```
+Данная конструкция позволяет получить результат от первого успешно завершившегося воркера.
+
+### 2. Natural Expressions (Экспериментально)
+Поддержка встроенных языковых блоков естественного языка с интерполяцией выражений для интеграции генеративного AI/LLM:
+```ballerina
+Joke joke = natural { 
+    "Расскажи шутку о ${subject}." 
+};
+```
+Парсер корректно распознает ключевое слово `natural`, блочные скобки `{}` и подстановки `${expression}` внутри блока.

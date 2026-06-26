@@ -356,6 +356,7 @@ module.exports = grammar({
             $.anonymous_function_expr,
             $.arrow_function_expr,
             $.worker_receive_expression,
+            $.natural_expr,
             $.object_constructor_expr,
             $.inner_expr,
             $.type_cast_expr,
@@ -791,7 +792,8 @@ module.exports = grammar({
             choice(
                 $.identifier,
                 "function",
-                $.multiple_worker_receive
+                $.multiple_worker_receive,
+                $.alternate_worker_receive
             )
         )),
 
@@ -820,6 +822,21 @@ module.exports = grammar({
         )),
 
         logical_not_expr: $ => prec(9, seq("!", $.expression)),
+
+        alternate_worker_receive: $ => prec.left(15, choice(
+            seq(choice($.identifier, "function"), "|", choice($.identifier, "function")),
+            seq($.alternate_worker_receive, "|", choice($.identifier, "function"))
+        )),
+
+        natural_expr: $ => seq("natural", "{", optional($.natural_body), "}"),
+        natural_body: $ => repeat1(choice(
+            $.template_substitution,
+            $.natural_content
+        )),
+        natural_content: $ => choice(
+            /[^}$]+/,
+            "$"
+        ),
     },
     conflicts: $ => [
         [$.union_type_desc],
@@ -845,6 +862,10 @@ module.exports = grammar({
         [$.function_type_desc, $.anonymous_function_expr],
         [$.object_type_desc, $.object_constructor_expr],
         [$.class_member, $.object_type_members],
-        [$.error_binding_pattern_members]
+        [$.error_binding_pattern_members],
+        [$.alternate_worker_receive],
+        [$.alternate_worker_receive, $.binary_or_expr],
+        [$.worker_receive_expression, $.alternate_worker_receive],
+        [$.worker_receive_expression, $.binary_or_expr]
     ],
 });

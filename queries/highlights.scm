@@ -70,6 +70,8 @@
 
 (string_literal) @string
 (back_tick_string) @string
+"natural" @keyword
+(natural_content) @string
 (template_substitution
   "${" @punctuation.special
   "}" @punctuation.special)

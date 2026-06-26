@@ -498,7 +498,7 @@
     "nodedir": "/Users/oivanov/Library/Caches/node-gyp/22.21.1",
     "standalone_static_library": 1,
     "global_prefix": "/usr/local",
-    "local_prefix": "/Users/oivanov/Develop/Projects/ballerina-extensions/grammars/ballerina",
+    "local_prefix": "/Users/oivanov/Develop/Projects/ballerina-extensions",
     "globalconfig": "/usr/local/etc/npmrc",
     "userconfig": "/Users/oivanov/.npmrc",
     "init_module": "/Users/oivanov/.npm-init.js",

@@ -57,6 +57,25 @@
     }
   },
   {
+    "type": "alternate_worker_receive",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "alternate_worker_receive",
+          "named": true
+        },
+        {
+          "type": "identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "annotation_attachment",
     "named": true,
     "fields": {},
@@ -1255,6 +1274,10 @@
         },
         {
           "type": "mapping_constructor_expr",
+          "named": true
+        },
+        {
+          "type": "natural_expr",
           "named": true
         },
         {
@@ -2908,6 +2931,45 @@
         },
         {
           "type": "identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "natural_body",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "natural_content",
+          "named": true
+        },
+        {
+          "type": "template_substitution",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "natural_content",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "natural_expr",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "natural_body",
           "named": true
         }
       ]
@@ -4812,6 +4874,10 @@
       "required": false,
       "types": [
         {
+          "type": "alternate_worker_receive",
+          "named": true
+        },
+        {
           "type": "identifier",
           "named": true
         },
@@ -5333,6 +5399,10 @@
   },
   {
     "type": "match",
+    "named": false
+  },
+  {
+    "type": "natural",
     "named": false
   },
   {
