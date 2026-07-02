@@ -13,17 +13,20 @@ impl zed::Extension for BallerinaExtension {
         worktree: &zed::Worktree,
     ) -> Result<Command> {
         let mut path = None;
-        let mut args = vec!["start-language-server".to_string()];
         let mut env = worktree.shell_env();
+
+        // Убедимся, что HOME присутствует в env, так как без него язык не сможет найти ~/.ballerina
+        if !env.iter().any(|(k, _)| k == "HOME") {
+            if let Ok(home) = std::env::var("HOME") {
+                env.push(("HOME".to_string(), home));
+            }
+        }
 
         // Попытка прочесть настройки пользователя из settings.json для данного LSP-сервера
         if let Ok(settings) = LspSettings::for_worktree(language_server_id.as_ref(), worktree) {
             if let Some(binary) = settings.binary {
                 if let Some(custom_path) = binary.path {
                     path = Some(custom_path);
-                }
-                if let Some(custom_args) = binary.arguments {
-                    args = custom_args;
                 }
                 if let Some(custom_env) = binary.env {
                     for (key, value) in custom_env {
@@ -38,27 +41,110 @@ impl zed::Extension for BallerinaExtension {
         }
 
         // Если пользователь не переопределил путь к bal, ищем его в PATH
-        let command = if let Some(path) = path {
+        let bal_command = if let Some(path) = path {
             path
         } else {
             worktree.which("bal")
                 .ok_or_else(|| "The 'bal' command line tool was not found in your PATH. Please install Ballerina Swan Lake or configure the path in settings.".to_string())?
         };
 
+        // Запуск через /bin/sh с использованием shell-скрипта для поиска бандлированного JAR языкового сервера
+        let shell_script = format!(
+            r#"
+BAL_BIN=$(readlink -f "{bal_command}" 2>/dev/null || realpath "{bal_command}" 2>/dev/null || echo "{bal_command}")
+BAL_INSTALL_DIR=$(dirname "$(dirname "$BAL_BIN")")
+
+# Ищем бандлированную версию языкового сервера
+JAR_PATH=$(ls -1d "$HOME"/.antigravity-ide/extensions/wso2.ballerina-*/ls/ballerina-language-server-*.jar "$HOME"/.vscode/extensions/wso2.ballerina-*/ls/ballerina-language-server-*.jar "$HOME"/.cursor/extensions/wso2.ballerina-*/ls/ballerina-language-server-*.jar 2>/dev/null | tail -n 1)
+
+if [ -n "$JAR_PATH" ] && [ -f "$JAR_PATH" ]; then
+    # Ищем JDK в зависимостях Ballerina (выбираем самую свежую версию с помощью tail -n 1)
+    JAVA_PATH=$(ls -1d "$BAL_INSTALL_DIR"/dependencies/jdk-*/bin/java 2>/dev/null | tail -n 1)
+    if [ -z "$JAVA_PATH" ] || [ ! -f "$JAVA_PATH" ]; then
+        JAVA_PATH="java"
+    fi
+    
+    # Ищем домашнюю директорию дистрибутива Ballerina (фильтруем по шаблону [0-9]*, чтобы исключить файл ballerina-version)
+    DIST_HOME=$(ls -1d "$BAL_INSTALL_DIR"/distributions/ballerina-[0-9]* 2>/dev/null | tail -n 1)
+    if [ -z "$DIST_HOME" ]; then
+        DIST_HOME="$BAL_INSTALL_DIR"
+    fi
+    
+    exec "$JAVA_PATH" "-Dballerina.home=$DIST_HOME" "-jar" "$JAR_PATH"
+else
+    exec "{bal_command}" "start-language-server"
+fi
+"#,
+            bal_command = bal_command
+        );
+
         Ok(Command {
-            command,
-            args,
+            command: "/bin/sh".to_string(),
+            args: vec!["-c".to_string(), shell_script],
             env,
         })
     }
 
     fn language_server_initialization_options(
         &mut self,
-        _language_server_id: &zed::LanguageServerId,
-        _worktree: &zed::Worktree,
+        language_server_id: &zed::LanguageServerId,
+        worktree: &zed::Worktree,
     ) -> Result<Option<zed::serde_json::Value>> {
+        let mut path = None;
+        if let Ok(settings) = LspSettings::for_worktree(language_server_id.as_ref(), worktree) {
+            if let Some(binary) = settings.binary {
+                if let Some(custom_path) = binary.path {
+                    path = Some(custom_path);
+                }
+            }
+        }
+
+        let bal_path = if let Some(path) = path {
+            path
+        } else {
+            worktree.which("bal")
+                .ok_or_else(|| "The 'bal' command line tool was not found in your PATH. Please install Ballerina Swan Lake or configure the path in settings.".to_string())?
+        };
+
+        let ballerina_home = get_ballerina_home(&bal_path);
+
         Ok(Some(zed::serde_json::json!({
-            "enableInlayHints": true
+            "enableInlayHints": true,
+            "settings": {
+                "ballerina": {
+                    "home": ballerina_home
+                }
+            }
+        })))
+    }
+
+    fn language_server_workspace_configuration(
+        &mut self,
+        language_server_id: &zed::LanguageServerId,
+        worktree: &zed::Worktree,
+    ) -> Result<Option<zed::serde_json::Value>> {
+        let mut path = None;
+        if let Ok(settings) = LspSettings::for_worktree(language_server_id.as_ref(), worktree) {
+            if let Some(binary) = settings.binary {
+                if let Some(custom_path) = binary.path {
+                    path = Some(custom_path);
+                }
+            }
+        }
+
+        let bal_path = if let Some(path) = path {
+            path
+        } else {
+            worktree.which("bal")
+                .ok_or_else(|| "The 'bal' command line tool was not found in your PATH. Please install Ballerina Swan Lake or configure the path in settings.".to_string())?
+        };
+
+        let ballerina_home = get_ballerina_home(&bal_path);
+
+        Ok(Some(zed::serde_json::json!({
+            "ballerina": {
+                "home": ballerina_home
+            }
         })))
     }
 
