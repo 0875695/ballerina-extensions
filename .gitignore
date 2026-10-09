@@ -31,3 +31,7 @@ Thumbs.db
 
 # Scratch / temporary
 /scratch/
+
+# Build artifacts
+*.wasm
+/grammars/

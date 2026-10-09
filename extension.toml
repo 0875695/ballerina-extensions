@@ -8,8 +8,7 @@ repository = "https://github.com/0875695/ballerina-extensions"
 
 [grammars.ballerina]
 repository = "https://github.com/0875695/ballerina-extensions.git"
-rev = "48afa1b549d852d4f7ddf54d2c638193c33ec000"
-path = "grammars/ballerina"
+rev = "6a3739b82a4eefc8a140e01f99a5140e4142c76e"
 
 [language_servers.ballerina-language-server]
 name = "Ballerina Language Server"
