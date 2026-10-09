@@ -6509,19 +6509,27 @@
       "members": [
         {
           "type": "STRING",
-          "value": "\t"
+          "value": "\\t"
         },
         {
           "type": "STRING",
-          "value": "\n"
+          "value": "\\n"
         },
         {
           "type": "STRING",
-          "value": "\r"
+          "value": "\\r"
         },
         {
           "type": "STRING",
-          "value": "\\"
+          "value": "\\\\"
+        },
+        {
+          "type": "STRING",
+          "value": "\\\""
+        },
+        {
+          "type": "STRING",
+          "value": "\\'"
         }
       ]
     },

@@ -386,3 +386,74 @@ function add(int a, int b) returns int = external;
               (primary_type_desc
                 (builtin_type_name)))))
         (external_function_body)))))
+
+================================================================================
+Alternate worker receive
+================================================================================
+
+function test() {
+    int x = <- w1 | w2 | w3;
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (module_part
+    (module_defn
+      (function_defn
+        (identifier)
+        (signature)
+        (stmt_block
+          (statement
+            (local_var_decl_stmt
+              (typed_binding_pattern
+                (inferable_type_desc
+                  (type_desc
+                    (postfix_type_desc
+                      (primary_type_desc
+                        (builtin_type_name)))))
+                (binding_pattern
+                  (identifier)))
+              (expression
+                (worker_receive_expression
+                  (alternate_worker_receive
+                    (alternate_worker_receive
+                      (identifier)
+                      (identifier))
+                    (identifier)))))))))))
+
+================================================================================
+Natural expression
+================================================================================
+
+function test() {
+    var joke = natural { Tell a joke about ${subject}. };
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (module_part
+    (module_defn
+      (function_defn
+        (identifier)
+        (signature)
+        (stmt_block
+          (statement
+            (local_var_decl_stmt
+              (typed_binding_pattern
+                (inferable_type_desc)
+                (binding_pattern
+                  (identifier)))
+              (expression
+                (natural_expr
+                  (natural_body
+                    (natural_content)
+                    (template_substitution
+                      (expression
+                        (inner_expr
+                          (primary_expr
+                            (variable_reference_expr
+                              (identifier))))))
+                    (natural_content)))))))))))
+

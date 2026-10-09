@@ -18,6 +18,7 @@ function test() {
 //           ^ string
 //                          ^ punctuation.special
 //                           ^ variable
-//                                    ^ punctuation.special
+    var f = "\"";
+//           ^ string
 }
 

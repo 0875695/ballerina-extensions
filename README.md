@@ -1,71 +1,65 @@
-# Ballerina Extension & Tree-sitter Parser for Zed IDE
+# Ballerina Extension for Zed
 
-Данный репозиторий представляет собой расширение для редактора **Zed IDE**, добавляющее поддержку языка программирования **Ballerina (Swan Lake)**. Оно объединяет в себе парсер Tree-sitter для подсветки синтаксиса, интеграцию с языковым сервером (LSP) и прокси-скрипт для отладчика (DAP).
+This extension provides support for the [Ballerina](https://ballerina.io/) programming language (Swan Lake) in the [Zed](https://zed.dev/) editor. It includes Tree-sitter grammar for syntax highlighting, integration with the official Ballerina Language Server (LSP), and a DAP debugger adapter.
 
-## Структура проекта
+## Features
 
-Проект имеет следующую структуру директорий и файлов:
+- **Syntax Highlighting**: Comprehensive Tree-sitter grammar supporting Ballerina Swan Lake syntax, including modern Ballerina 2024R1 constructs.
+- **Language Server (LSP)**: Automatic detection and integration with the Ballerina Language Server (`bal start-language-server`).
+- **Debugger (DAP)**: Debug adapter proxy supporting breakpoints, stepping, call stacks, and variable evaluation.
 
-- `grammar.js` — описание грамматики Tree-sitter для языка Ballerina.
-- `src/lib.rs` — Rust-код расширения, использующий `zed_extension_api` для запуска Ballerina Language Server и DAP-прокси.
-- `extension.toml` — метаданные расширения Zed (идентификатор, версия, поддерживаемые языковые серверы и отладчики).
-- `queries/highlights.scm` — правила сопоставления синтаксиса Tree-sitter для подсветки кода в редакторе.
-- `test/corpus/` — тестовые сценарии (корпус тестов) для проверки парсера Tree-sitter.
-- `package.json` — конфигурация NPM для сборки и тестирования парсера Tree-sitter.
-- `Cargo.toml` — конфигурация Rust-пакета расширения.
+## Requirements
 
-## Установка и сборка
+- **Ballerina Swan Lake** (Update 9 / 2201.9.0 or later recommended).
+  Ensure `bal` is available in your `PATH`, or configure the path in Zed settings.
+- **Node.js** (optional, used as runtime for the debug adapter proxy).
 
-### Разработка парсера Tree-sitter
+## Configuration
 
-Для изменения грамматики и запуска тестов парсера требуются [Node.js](https://nodejs.org/) и `tree-sitter-cli`:
+You can configure the extension in your Zed `settings.json`:
 
-1. Установите зависимости проекта:
+```json
+{
+  "lsp": {
+    "ballerina-language-server": {
+      "binary": {
+        "path": "/path/to/bal"
+      }
+    }
+  }
+}
+```
+
+## Development
+
+### Building and Testing the Tree-sitter Grammar
+
+Prerequisites: [Node.js](https://nodejs.org/) and `tree-sitter-cli`.
+
+1. Install dependencies:
    ```bash
    npm install
    ```
-2. Сгенерируйте парсер из `grammar.js`:
+2. Generate the parser:
    ```bash
    npx tree-sitter generate
    ```
-3. Запустите тесты грамматики:
+3. Run tests:
    ```bash
-   npm run test
-   ```
-   или напрямую через CLI:
-   ```bash
-   tree-sitter test
+   npm test
    ```
 
-### Сборка расширения Zed
+### Building the Zed Extension
 
-Расширение компилируется в WebAssembly модуль для работы внутри Zed. Для этого требуется установленный Rust:
+Prerequisites: [Rust](https://rustup.rs/) with the `wasm32-wasip1` target:
 
-1. Проверьте корректность сборки кода расширения:
-   ```bash
-   cargo check
-   ```
-2. Соберите релизную версию:
-   ```bash
-   cargo build --release
-   ```
-
-## Поддержка спецификации Ballerina 2024R1
-
-Проект обновлен для поддержки спецификации языка **Ballerina 2024R1** (Swan Lake Update 9+). В грамматику и парсер добавлены следующие возможности:
-
-### 1. Alternate Receive Action
-Поддержка синтаксиса параллельного ожидания от воркеров:
-```ballerina
-string|error result = <- w1 | w2;
+```bash
+rustup target add wasm32-wasip1
+cargo build --target wasm32-wasip1 --release
 ```
-Данная конструкция позволяет получить результат от первого успешно завершившегося воркера.
 
-### 2. Natural Expressions (Экспериментально)
-Поддержка встроенных языковых блоков естественного языка с интерполяцией выражений для интеграции генеративного AI/LLM:
-```ballerina
-Joke joke = natural { 
-    "Расскажи шутку о ${subject}." 
-};
-```
-Парсер корректно распознает ключевое слово `natural`, блочные скобки `{}` и подстановки `${expression}` внутри блока.
+To test locally in Zed, open the Command Palette (`cmd-shift-p` / `ctrl-shift-p`) and select **zed: install dev extension**, then choose this directory.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE.md).

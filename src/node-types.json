@@ -4942,18 +4942,6 @@
     }
   },
   {
-    "type": "\t",
-    "named": false
-  },
-  {
-    "type": "\n",
-    "named": false
-  },
-  {
-    "type": "\r",
-    "named": false
-  },
-  {
     "type": "!",
     "named": false
   },
@@ -5138,7 +5126,27 @@
     "named": false
   },
   {
-    "type": "\\",
+    "type": "\\\"",
+    "named": false
+  },
+  {
+    "type": "\\'",
+    "named": false
+  },
+  {
+    "type": "\\\\",
+    "named": false
+  },
+  {
+    "type": "\\n",
+    "named": false
+  },
+  {
+    "type": "\\r",
+    "named": false
+  },
+  {
+    "type": "\\t",
     "named": false
   },
   {

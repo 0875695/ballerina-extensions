@@ -147,6 +147,7 @@ module.exports = grammar({
             $.singleton_type_desc,
             seq("(", $.type_desc, ")"),
             $.type_reference,
+            $.error_type_desc,
             $.builtin_type_name,
             $.map_type_desc,
             $.stream_type_desc,
@@ -238,6 +239,7 @@ module.exports = grammar({
             $.assign_stmt,
             $.compound_assign_stmt,
             $.destructuring_assign_stmt,
+            $.worker_send_stmt,
             $.return_stmt,
             $.if_else_stmt,
             $.while_stmt,
@@ -261,7 +263,10 @@ module.exports = grammar({
         local_var_decl_stmt: $ => seq(optional("final"), $.typed_binding_pattern, "=", $.expression, ";"),
         binding_pattern: $ => choice(
             $.identifier,
-            $.wildcard_binding_pattern
+            $.wildcard_binding_pattern,
+            $.list_binding_pattern,
+            $.mapping_binding_pattern,
+            $.error_binding_pattern
         ),
 
         call_stmt: $ => seq($.call_expr, ";"),
@@ -347,6 +352,12 @@ module.exports = grammar({
 
         expression: $ => choice(
             $.new_expression,
+            $.let_expr,
+            $.anonymous_function_expr,
+            $.arrow_function_expr,
+            $.worker_receive_expression,
+            $.natural_expr,
+            $.object_constructor_expr,
             $.inner_expr,
             $.type_cast_expr,
             $.list_constructor_expr,
@@ -372,6 +383,7 @@ module.exports = grammar({
             $.string_template_expression,
             $.xml_template_expression,
             $.raw_template_expression,
+            $.regexp_template_expression,
         ),
 
         string_template_expression: $ => seq("string", $.back_tick_string),
@@ -386,6 +398,7 @@ module.exports = grammar({
 
         inner_expr: $ => prec.left(choice(
             $.logical_expr,
+            $.logical_not_expr,
             $.nil_lifted_expr,
             $.equality_expr,
             $.relational_expr,
@@ -442,7 +455,7 @@ module.exports = grammar({
         )),
         unary_numeric_expression: $ => prec.left(choice(
             seq("-", $.expression),
-            // TODO: unary +
+            seq("+", $.expression),
             seq("~", $.expression),
         )),
         type_cast_expr: $ => prec(1, seq("<", $.type_desc, ">", $.expression)),
@@ -466,7 +479,11 @@ module.exports = grammar({
         ),
 
         query_expr: $ => prec.left(seq(optional($.query_construct_type), $.query_pipeline, choice($.select_clause, $.collect_clause), optional($.on_conflict_clause))),
-        query_construct_type: $ => choice("map", "stream"), // TODO: add table
+        query_construct_type: $ => choice(
+            "map",
+            "stream",
+            seq("table", optional($.table_key_specifier))
+        ),
         query_pipeline: $ => seq($.from_clause, repeat($.intermediate_clause)),
         intermediate_clause: $ => choice(
             $.from_clause,
@@ -513,7 +530,7 @@ module.exports = grammar({
         nil_literal: $ => choice(seq("(", ")"), "null"),
         boolean_literal: $ => choice("true", "false"),
 
-        error_constructor_expr: $ => seq("error", $.arg_list),
+        error_constructor_expr: $ => seq("error", optional($.type_reference), $.arg_list),
         list_constructor_expr: $ => seq("[", optional($.expr_list), "]"),
         expr_list: $ => seq($.expression, repeat(seq(",", $.expression))),
         mapping_constructor_expr: $ => seq("{", optional($.field_list), "}"),
@@ -685,10 +702,141 @@ module.exports = grammar({
         double_quoted_string_literal: $ => seq('"', optional($.string_body), '"'),
         string_body: $ => repeat1(choice(token.immediate(prec(1, /[^\\"\n]+/)), $.string_escape)),
         string_escape: $ => choice($.string_single_escpace, $.numeric_escape),
-        string_single_escpace: $ => choice("\t", "\n", "\r", "\\"),
+        string_single_escpace: $ => choice("\\t", "\\n", "\\r", "\\\\", "\\\"", "\\'"),
         numeric_escape: $ => seq("\\u", "{", $.code_point, "}"),
         code_point: $ => repeat1($.hex_digit),
-        comment: _ => token(seq(choice('//', '#'), /.*/))
+        comment: _ => token(seq(choice('//', '#'), /.*/)),
+
+        list_binding_pattern: $ => seq("[", optional($.list_binding_pattern_members), "]"),
+        list_binding_pattern_members: $ => choice(
+            seq($.binding_pattern, repeat(seq(",", $.binding_pattern)), optional(seq(",", $.rest_binding_pattern))),
+            $.rest_binding_pattern
+        ),
+        rest_binding_pattern: $ => seq("...", $.identifier),
+
+        mapping_binding_pattern: $ => seq("{", optional($.mapping_binding_pattern_members), "}"),
+        mapping_binding_pattern_members: $ => choice(
+            seq($.field_binding_pattern, repeat(seq(",", $.field_binding_pattern)), optional(seq(",", $.rest_binding_pattern))),
+            $.rest_binding_pattern
+        ),
+        field_binding_pattern: $ => choice(
+            seq($.field_name, ":", $.binding_pattern),
+            $.identifier
+        ),
+
+        error_binding_pattern: $ => seq(
+            "error",
+            optional($.type_reference),
+            "(",
+            optional($.error_binding_pattern_members),
+            ")"
+        ),
+        error_binding_pattern_members: $ => choice(
+            seq(
+                $.binding_pattern,
+                optional(seq(
+                    ",",
+                    $.binding_pattern,
+                    repeat(seq(",", $.error_detail_binding_pattern)),
+                    optional(seq(",", $.rest_binding_pattern))
+                )),
+                optional(seq(
+                    ",",
+                    $.error_detail_binding_pattern,
+                    repeat(seq(",", $.error_detail_binding_pattern)),
+                    optional(seq(",", $.rest_binding_pattern))
+                ))
+            ),
+            seq(
+                $.error_detail_binding_pattern,
+                repeat(seq(",", $.error_detail_binding_pattern)),
+                optional(seq(",", $.rest_binding_pattern))
+            ),
+            $.rest_binding_pattern
+        ),
+        error_detail_binding_pattern: $ => seq(
+            $.identifier,
+            "=",
+            $.binding_pattern
+        ),
+
+        anonymous_function_expr: $ => seq(
+            optional($.function_quals),
+            "function",
+            $.signature,
+            $.stmt_block
+        ),
+
+        arrow_function_expr: $ => prec(-1, seq(
+            optional($.function_quals),
+            $.arrow_param_list,
+            "=>",
+            $.expression
+        )),
+
+        arrow_param_list: $ => choice(
+            $.identifier,
+            seq("(", optional($.param_list), ")"),
+            seq("(", $.identifier, repeat(seq(",", $.identifier)), ")")
+        ),
+
+        worker_send_stmt: $ => seq(
+            $.expression,
+            choice("->", "->>"),
+            choice($.identifier, "function"),
+            ";"
+        ),
+
+        worker_receive_expression: $ => prec(9, seq(
+            "<-",
+            choice(
+                $.identifier,
+                "function",
+                $.multiple_worker_receive,
+                $.alternate_worker_receive
+            )
+        )),
+
+        multiple_worker_receive: $ => seq("{", $.receive_fields, "}"),
+        receive_fields: $ => seq($.receive_field, repeat(seq(",", $.receive_field))),
+        receive_field: $ => seq($.identifier, ":", $.identifier),
+
+        error_type_desc: $ => seq("error", "<", $.type_desc, ">"),
+
+        regexp_template_expression: $ => seq("re", $.back_tick_string),
+
+        object_constructor_expr: $ => seq(
+            optional(choice("client", "isolated", "service")),
+            "object",
+            "{",
+            repeat($.class_member),
+            "}"
+        ),
+
+        let_expr: $ => prec(9, seq(
+            "let",
+            $.let_var_decl,
+            repeat(seq(",", $.let_var_decl)),
+            "in",
+            $.expression
+        )),
+
+        logical_not_expr: $ => prec(9, seq("!", $.expression)),
+
+        alternate_worker_receive: $ => prec.left(15, choice(
+            seq(choice($.identifier, "function"), "|", choice($.identifier, "function")),
+            seq($.alternate_worker_receive, "|", choice($.identifier, "function"))
+        )),
+
+        natural_expr: $ => seq("natural", "{", optional($.natural_body), "}"),
+        natural_body: $ => repeat1(choice(
+            $.template_substitution,
+            $.natural_content
+        )),
+        natural_content: $ => choice(
+            /[^}$]+/,
+            "$"
+        ),
     },
     conflicts: $ => [
         [$.union_type_desc],
@@ -708,6 +856,16 @@ module.exports = grammar({
         [$.field_access_expr, $.field_access_lvexpr, $.method_call_expr],
         [$.lvexpr, $.access_target],
         [$.field_access_lvexpr, $.field_access_expr],
-        [$.call_expr, $.access_target]
+        [$.call_expr, $.access_target],
+        [$.array_member_type_desc, $.inferable_type_desc],
+        [$.primary_type_desc, $.param],
+        [$.function_type_desc, $.anonymous_function_expr],
+        [$.object_type_desc, $.object_constructor_expr],
+        [$.class_member, $.object_type_members],
+        [$.error_binding_pattern_members],
+        [$.alternate_worker_receive],
+        [$.alternate_worker_receive, $.binary_or_expr],
+        [$.worker_receive_expression, $.alternate_worker_receive],
+        [$.worker_receive_expression, $.binary_or_expr]
     ],
 });
