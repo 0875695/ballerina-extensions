@@ -119,6 +119,7 @@
 
 (string_literal) @string
 (back_tick_string) @string
+(back_tick_content) @string
 (template_substitution
   "${" @punctuation.special
   "}" @punctuation.special)

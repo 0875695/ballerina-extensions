@@ -179,16 +179,16 @@ module.exports = grammar({
 
         nil_type_desc: $ => $.nil_literal,
         singleton_type_desc: $ => $.simple_const_no_ref_expr,
-        type_reference: $ => prec(3, choice(
+        type_reference: $ => choice(
             $.identifier,
             $.qualified_identifier,
             $.builtin_type_qualified_identifier
-        )),
+        ),
         // This is a hack to make types like string:Char to work
         // otherwise it will match up the string and break
-        builtin_type_qualified_identifier: $=> seq(
+        builtin_type_qualified_identifier: $=> prec(3, seq(
             $.builtin_type_name, ":", $.identifier
-        ),
+        )),
         map_type_desc: $ => seq("map", "<", $.type_desc, ">"),
         stream_type_desc: $ => seq("stream", "<", $.type_desc, optional(seq(",", $.type_desc)), ">"),
         future_type_desc: $ => seq("future", "<", $.type_desc, ">"),
@@ -256,7 +256,8 @@ module.exports = grammar({
             $.rollback_stmt,
             $.retry_stmt,
             $.fork_stmt,
-            $.worker_declaration
+            $.worker_declaration,
+            $.query_action_stmt
         ),
 
         local_no_init_var_decl_stmt: $ => seq(optional("final"), $.typed_binding_pattern, ";"),
@@ -279,7 +280,7 @@ module.exports = grammar({
         ),
         remote_call_expr: $ => prec.left(seq($.primary_expr, "->", $.identifier, $.arg_list)),
 
-        assign_stmt: $ => seq($.lvexpr, "=", $.expression, ";"),
+        assign_stmt: $ => prec(2, seq($.lvexpr, "=", $.expression, ";")),
         compound_assign_stmt: $ => seq($.lvexpr, $.compound_assignment_operator, $.expression, ";"),
         destructuring_assign_stmt: $ => seq($.wildcard_binding_pattern, "=", $.expression, ";"),
 
@@ -290,7 +291,6 @@ module.exports = grammar({
             $.field_access_lvexpr,
             $.member_access_lvexpr,
         )),
-        variable_reference_expr: $ => $.identifier,
         field_access_lvexpr: $ => prec.left(seq($.lvexpr, ".", $.identifier)),
         member_access_lvexpr: $ => seq($.lvexpr, "[", $.expression, "]"),
 
@@ -404,7 +404,12 @@ module.exports = grammar({
             $.relational_expr,
             $.type_test_expr,
             $.typeof_expr,
+            $.range_expr,
             $.primary_expr
+        )),
+        range_expr: $ => prec.left(choice(
+            seq($.expression, "...", $.expression),
+            seq($.expression, "..<", $.expression)
         )),
         logical_expr: $ => choice(
             $.logical_and_expr,
@@ -514,6 +519,8 @@ module.exports = grammar({
         select_clause: $ => prec.left(seq("select", $.expression)),
 
         on_conflict_clause: $ => prec.left(seq("on", "conflict", $.expression)),
+        query_action: $ => seq($.query_pipeline, "do", $.stmt_block),
+        query_action_stmt: $ => seq(optional($.checking_keyword), $.query_action, optional(";")),
 
         typed_binding_pattern: $ => seq($.inferable_type_desc, $.binding_pattern),
         inferable_type_desc: $ => choice("var", $.type_desc),
@@ -535,20 +542,27 @@ module.exports = grammar({
         expr_list: $ => seq($.expression, repeat(seq(",", $.expression))),
         mapping_constructor_expr: $ => seq("{", optional($.field_list), "}"),
         field_list: $ => seq($.field, repeat(seq(",", $.field))),
-        field: $ => seq($.field_name, ":", $.expression),
+        field: $ => choice(
+            seq($.field_name, ":", $.expression),
+            $.identifier
+        ),
 
         access_target: $ => prec(1, choice(
             $.variable_reference_expr,
             $.field_access_expr,
             $.member_access_expr,
-            $.call_expr
+            $.call_expr,
+            $.literal,
+            $.list_constructor_expr,
+            $.template_expression,
+            seq("(", $.inner_expr, ")")
         )),
 
         member_access_expr: $ => seq($.access_target, "[", $.expression, "]"),
         field_access_expr: $ => prec.left(seq($.access_target, choice(".", "?."), $.identifier)),
 
         function_call_expr: $ => seq($.function_reference, $.arg_list),
-        method_call_expr: $ => prec.left(seq($.access_target, choice(".", "?."), $.identifier, $.arg_list)),
+        method_call_expr: $ => prec.left(2, seq($.access_target, choice(".", "?."), $.identifier, $.arg_list)),
         arg_list: $ => seq(
             "(",
             optional(seq(
@@ -866,6 +880,10 @@ module.exports = grammar({
         [$.alternate_worker_receive],
         [$.alternate_worker_receive, $.binary_or_expr],
         [$.worker_receive_expression, $.alternate_worker_receive],
-        [$.worker_receive_expression, $.binary_or_expr]
+        [$.worker_receive_expression, $.binary_or_expr],
+        [$.inferable_type_desc, $.lvexpr],
+        [$.type_reference, $.variable_reference_expr, $.arrow_param_list],
+        [$.type_reference, $.arrow_param_list],
+        [$.type_reference, $.variable_reference_expr]
     ],
 });
